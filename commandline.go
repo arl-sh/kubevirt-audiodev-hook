@@ -62,74 +62,28 @@ func (s v1alpha2Server) OnDefineDomain(ctx context.Context, params *hooksV1alpha
 		panic(err)
 	}
 
-	hostdevSpec, err := domainSpec.ValuesForPath("domain.devices.hostdev")
+	argsSpec, err := domainSpec.ValuesForPath("domain.qemu:commandline.qemu:arg")
 	if err != nil {
-		log.Log.Reason(err).Errorf("Failed to get values for path 'domain.devices.hostdev': %+v", domainSpec)
+		log.Log.Reason(err).Errorf("Failed to get values for path 'domain.qemu:commandline.qemu:arg': %+v", domainSpec)
 		panic(err)
 	}
 
 	annotations := vmiSpec.GetAnnotations()
 	for key, value := range annotations {
 		if strings.HasPrefix(key, "arg.commandline.vm.kubevirt.io/") {
-			alias := domainSchema.UserAliasPrefix + "usb-" + key[25:]
+			arg := "-" + key[31:] + "=" + value
 
-			var device mxj.Map
-
-			if regexp.MustCompile("^[0-9a-fA-F]{4}:[0-9a-fA-F]{4}$").MatchString(value) {
-				log.Log.Infof("Adding USB device '%s' targeted by 'vendor:product'='%s'", alias, value)
-
-				vendorId := "0x" + value[:4]
-				productId := "0x" + value[5:]
-
-				device = mxj.Map{
-					"alias": mxj.Map{
-						"-name": alias,
-					},
-					"-type": "usb",
-					"source": mxj.Map{
-						"-startupPolicy": "optional",
-						"vendor": mxj.Map{
-							"-id": vendorId,
-						},
-						"product": mxj.Map{
-							"-id": productId,
-						},
-					},
-				}
-			} else if regexp.MustCompile("^\\d{3}:\\d{3}$").MatchString(value) {
-				log.Log.Infof("Adding USB device '%s' targeted by address 'bus:device'='%s'", alias, value)
-
-				busId, _ := strconv.Atoi(value[:3])
-				deviceId, _ := strconv.Atoi(value[4:])
-
-				device = mxj.Map{
-					"alias": mxj.Map{
-						"-name": alias,
-					},
-					"-type": "usb",
-					"source": mxj.Map{
-						"-startupPolicy": "optional",
-						"address": mxj.Map{
-							"-bus":    busId,
-							"-device": deviceId,
-						},
-					},
-				}
-			} else {
-				err := fmt.Errorf("USB device selector '%s' does not match any of the expected formats", value)
-				log.Log.Reason(err).Errorf("Failed to apply annotation: %s", key)
-				panic(err)
-			}
-
-			hostdevSpec = append(hostdevSpec, device)
+			argsSpec = append(argsSpec, mxj.Map{
+				"-value": arg,
+			})
 		}
 	}
 
 	_, err = domainSpec.UpdateValuesForPath(mxj.Map{
-		"hostdev": hostdevSpec,
-	}, "domain.devices.hostdev")
+		"qemu:arg": argsSpec,
+	}, "domain.qemu:commandline.qemu:arg")
 	if err != nil {
-		log.Log.Reason(err).Errorf("Failed to update values for path 'domain.devices.hostdev': %+v", hostdevSpec)
+		log.Log.Reason(err).Errorf("Failed to update values for path 'domain.qemu:commandline.qemu:arg': %+v", argsSpec)
 		panic(err)
 	}
 
