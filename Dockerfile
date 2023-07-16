@@ -8,10 +8,10 @@ RUN go mod download && go mod verify
 ENV CGO_ENABLED=0
 
 COPY *.go ./
-RUN go build -v -o kubevirt-usbdevice-hook
+RUN go build -v -o kubevirt-commandline-hook
 
 FROM scratch
 
-COPY --from=build /app/kubevirt-usbdevice-hook /kubevirt-usbdevice-hook
+COPY --from=build /app/kubevirt-commandline-hook /kubevirt-commandline-hook
 
-ENTRYPOINT ["/kubevirt-usbdevice-hook"]
+ENTRYPOINT ["/kubevirt-commandline-hook"]

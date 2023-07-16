@@ -29,7 +29,7 @@ type infoServer struct{}
 
 func (s infoServer) Info(ctx context.Context, params *hooksInfo.InfoParams) (*hooksInfo.InfoResult, error) {
 	return &hooksInfo.InfoResult{
-		Name: "usbdevice",
+		Name: "commandline",
 		Versions: []string{
 			hooksV1alpha2.Version,
 		},
@@ -70,7 +70,7 @@ func (s v1alpha2Server) OnDefineDomain(ctx context.Context, params *hooksV1alpha
 
 	annotations := vmiSpec.GetAnnotations()
 	for key, value := range annotations {
-		if strings.HasPrefix(key, "usbdevice.vm.kubevirt.io/") {
+		if strings.HasPrefix(key, "arg.commandline.vm.kubevirt.io/") {
 			alias := domainSchema.UserAliasPrefix + "usb-" + key[25:]
 
 			var device mxj.Map
@@ -154,9 +154,9 @@ func (s v1alpha2Server) PreCloudInitIso(_ context.Context, params *hooksV1alpha2
 }
 
 func main() {
-	log.InitializeLogging("usbdevice-hook-sidecar")
+	log.InitializeLogging("commandline-hook-sidecar")
 
-	socketPath := filepath.Join(hooks.HookSocketsSharedDirectory, "usbdevice.sock")
+	socketPath := filepath.Join(hooks.HookSocketsSharedDirectory, "commandline.sock")
 	socket, err := net.Listen("unix", socketPath)
 	if err != nil {
 		log.Log.Reason(err).Errorf("Failed to initialized socket on path: %s", socket)

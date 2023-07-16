@@ -1,4 +1,4 @@
-module github.com/arl-sh/kubevirt-usbdevice-hook
+module github.com/arl-sh/kubevirt-commandline-hook
 
 go 1.20
 
